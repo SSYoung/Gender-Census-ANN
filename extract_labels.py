@@ -90,8 +90,15 @@ def extract_data(filename):
 
 train_filename = 'data/census-income.data'
 X_train, y_train = extract_data(train_filename)
-
-# SAVE DATA
-print('Saving Data')
+print('Saving Training Data')
 np.save('data/training_data.npy', X_train)
 np.save('data/training_labels.npy', y_train)
+
+
+test_filename = 'data/census-income.test'
+X_test, y_test = extract_data(test_filename)
+# SAVE DATA
+print('Saving Training Data')
+np.save('data/training_data.npy', X_test)
+np.save('data/training_labels.npy', y_test)
+

@@ -59,6 +59,14 @@ def extract_data(filename):
     r = raw.shape[1]
     k = total_classes
 
+    # labels
+    y = np.zeros((m,2))
+    for i in range(labels.shape[0]):
+        if labels[i] == 'Female':
+            y[i,0] = 1
+        else:
+            y[i,1] = 1
+
     ## TIME TO FORMAT
     print('Formatting data')
     X = np.zeros((m, k))

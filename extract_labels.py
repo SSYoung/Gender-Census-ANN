@@ -96,7 +96,7 @@ def extract_data(filename):
             for copy_col in range(0, num_cat):
                 X[:,index] = O[:,copy_col]
                 index += 1
-    return X, labels
+    return X, y
 
 # TEST
 train_filename = 'data/census-income.data'

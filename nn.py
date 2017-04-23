@@ -27,6 +27,7 @@ data = np.load('data/training_data.npy')
 labels = np.load('data/training_labels.npy')
 test_data = np.load('data/testing_data.npy')
 test_labels = np.load('data/testing_labels.npy')
+print(labels.shape)
 
 #Parameters
 training_epochs = 51

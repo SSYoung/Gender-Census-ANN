@@ -27,12 +27,11 @@ data = np.load('data/training_data.npy')
 labels = np.load('data/training_labels.npy')
 test_data = np.load('data/testing_data.npy')
 test_labels = np.load('data/testing_labels.npy')
-print(labels.shape)
 
 #Parameters
-training_epochs = 51
+training_epochs = 25
 learning_rate = .01
-batch_size = 150
+batch_size = 256
 
 #Network Parameters
 num_hidden = 200

@@ -1,26 +1,32 @@
 import tensorflow as tf
 import numpy as np
 
-datax = 10000
-testx = 5000
-data = np.random.randint(0,2,(datax, 100))
-labels = np.zeros((datax,2))
-test_data = np.random.randint(0,2,(testx, 100))
-test_labels = np.zeros((testx,2))
-for i in range(datax):
-	if (data[i,0]) == 1:
-		labels[i,0] = 1
-		labels[i,1] = 0
-	else:
-		labels[i,0] = 0
-		labels[i,1] = 1
-for i in range(testx):
-	if (test_data[i,0]) == 1:
-		test_labels[i,0] = 1
-		test_labels[i,1] = 0
-	else:
-		test_labels[i,0] = 0
-		test_labels[i,1] = 1
+# datax = 10000
+# testx = 5000
+# data = np.random.randint(0,2,(datax, 100))
+# labels = np.zeros((datax,2))
+# test_data = np.random.randint(0,2,(testx, 100))
+# test_labels = np.zeros((testx,2))
+# for i in range(datax):
+# 	if (data[i,0]) == 1:
+# 		labels[i,0] = 1
+# 		labels[i,1] = 0
+# 	else:
+# 		labels[i,0] = 0
+# 		labels[i,1] = 1
+# for i in range(testx):
+# 	if (test_data[i,0]) == 1:
+# 		test_labels[i,0] = 1
+# 		test_labels[i,1] = 0
+# 	else:
+# 		test_labels[i,0] = 0
+# 		test_labels[i,1] = 1
+
+
+data = np.load('data/training_data.npy')
+labels = np.load('data/training_labels.npy')
+test_data = np.load('data/testing_data.npy')
+test_labels = np.load('data/testing_labels.npy')
 
 #Parameters
 training_epochs = 51

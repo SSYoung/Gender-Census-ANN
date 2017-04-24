@@ -77,12 +77,12 @@ def extract_data(filename, className, pruned_columns=[]):
     k = total_classes # feature count after one hot encoding
 
     # labels
-    y = np.zeros(m)
+    Y = np.zeros(m)
     for i in range(labels.shape[0]):
         if labels[i] == 'Female':
-            y[i] = 0
+            y[i,0] = 1
         else:
-            y[i] = 1
+            y[i,1] = 1
 
 
     X = np.zeros((m, r))
@@ -105,7 +105,7 @@ def extract_data(filename, className, pruned_columns=[]):
                         X[row,col] = class_mapping[name][str(raw[row,col]).strip()]
                 except KeyError:
                     continue
-    return X, y
+    return X, Y
 
 
 if __name__ == '__main__':

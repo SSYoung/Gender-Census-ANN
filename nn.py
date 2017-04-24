@@ -34,7 +34,7 @@ learning_rate = .01
 batch_size = 256
 
 #Network Parameters
-num_hidden = 200
+num_hidden = 80
 num_classes = 2 #male or female
 num_examples = data.shape[0]
 num_attributes = data.shape[1]

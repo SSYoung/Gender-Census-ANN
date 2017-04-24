@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 
-pd.set_option('display.max_columns', None)
-
 def get_metadata(filename, pruned_columns=[]):
     category_values = {}
     category_numbers= {}
@@ -59,7 +57,7 @@ def create_dataframe(filename, className, names_in_order,pruned_columns=[]):
 
     return df,labels
 
-def extract_data(filename, className, pruned_columns=[]):
+def form_np_array(filename, className, pruned_columns=[]):
     # metadata
     category_values, category_numbers, category_type, names_in_order, class_mapping = get_metadata(filename, pruned_columns)
     # create dataframe
@@ -107,22 +105,31 @@ def extract_data(filename, className, pruned_columns=[]):
                     continue
     return X, y
 
-
 if __name__ == '__main__':
+    filename = 'data/census-income.data'
+    className = 'sex'
+    # X_train, y_train = form_np_array('data/census-income.data', 'sex')
     pc = ['year','| instance weight', 'migration prev res in sunbelt', 'migration code-change in msa', \
             'migration code-change in reg', 'migration code-move within reg']
-    className = 'sex'
-    # TRAIN
-    train_filename = 'data/census-income.data'
-    X_train, y_train = extract_data(train_filename,className,pruned_columns=pc)
-    print('Saving Training Data')
-    np.save('data/training_data.npy', X_train)
-    np.save('data/training_labels.npy', y_train)
+    # pc = []
+    category_values, category_numbers, category_type, names_in_order, class_mapping = get_metadata(filename,pruned_columns=pc)
+    # df, labels = create_dataframe(filename, className, names_in_order, pruned_columns=pc)
+    X,y = form_np_array(filename, className, pruned_columns=pc)
 
-    # TEST
-    test_filename = 'data/census-income.test'
-    X_test, y_test = extract_data(test_filename,className,pruned_columns=pc)
-    print('Saving Test Data')
-    np.save('data/testing_data.npy', X_test)
-    np.save('data/testing_labels.npy', y_test)
-
+    print(X.shape)
+    column_question = np.zeros(X.shape[1])
+    total_clean = 0
+    for i in range(X.shape[0]):
+        clean = True
+        for j in range(X.shape[1]):
+            if X[i,j] == '?':
+                column_question[j] += 1
+                clean = False
+        if clean:
+            total_clean += 1
+    m = {}
+    for i in range(len(names_in_order) - 1):
+        m[names_in_order[i]] = (column_question[i], i, names_in_order[i])
+    for key in m:
+        print(m[key][2], m[key][1], m[key][0])
+    print(total_clean)

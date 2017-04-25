@@ -80,9 +80,9 @@ def extract_data(filename, className, pruned_columns=[]):
     Y = np.zeros(m)
     for i in range(labels.shape[0]):
         if labels[i] == 'Female':
-            y[i,0] = 1
+            Y[i,0] = 1
         else:
-            y[i,1] = 1
+            Y[i,1] = 1
 
 
     X = np.zeros((m, r))

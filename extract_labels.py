@@ -77,7 +77,7 @@ def extract_data(filename, className, pruned_columns=[]):
     k = total_classes # feature count after one hot encoding
 
     # labels
-    Y = np.zeros(m)
+    Y = np.zeros((m,2))
     for i in range(labels.shape[0]):
         if labels[i] == 'Female':
             Y[i,0] = 1

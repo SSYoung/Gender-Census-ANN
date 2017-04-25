@@ -11,8 +11,8 @@ def get_metadata(filename, pruned_columns=[]):
     lines = open('data/data_values.txt', 'r').readlines()
     for line in lines:
         name = line.split(':')[0]
-        if name == '| instance weight' or name in pruned_columns:
-            continue
+        # if name == '| instance weight' or name in pruned_columns:
+        #     continue
         classes = [s.strip() for s in line.split(':')[1].split(',')]
         # values
         classes[-1] = classes[-1][:-1]
@@ -37,9 +37,10 @@ def get_metadata(filename, pruned_columns=[]):
 
 def create_dataframe(filename, className, names_in_order,pruned_columns=[]):
     # create data frame and remove instance weight column
-    cols = [i for i in range(24)] + [i for i in range(25,len(names_in_order) + 1)]
+    # cols = range(len(names_in_order))
+    # cols = [i for i in range(24)] + [i for i in range(25,len(names_in_order) + 1)]
     print('Starting Reading ' + filename)
-    df = pd.read_csv(filename, names=names_in_order, usecols=cols, skipinitialspace=True)
+    df = pd.read_csv(filename, names=names_in_order, skipinitialspace=True)
     print('Finished Reading ' + filename)
 
     # cleanse last column
@@ -66,6 +67,14 @@ def extract_data(filename, className, pruned_columns=[]):
     df, labels = create_dataframe(filename, className, names_in_order, pruned_columns)
     # update names in order
     names_in_order.remove(className)
+    for prune in pruned_columns:
+        if prune in names_in_order:
+            names_in_order.remove(prune)
+        if prune in category_values:
+            del category_values[prune]
+            del category_numbers[prune]
+            del category_type[prune]
+            del class_mapping[prune]
     # prior counts
     column_vals = list(df.columns.values)
     total_classes = sum([category_numbers[name] for name in column_vals]) - category_numbers[className]
@@ -84,33 +93,42 @@ def extract_data(filename, className, pruned_columns=[]):
         else:
             Y[i,1] = 1
 
-
-    X = np.zeros((m, r))
-    for col in range(r):
-        name = names_in_order[col]
+    X = np.zeros((m, k))
+    index = 0
+    for c in range(r):
+        print('Data label number: ' + str(c) + ' of ' + str(r))
+        name = names_in_order[c]
+        col = raw[:,c]
         if category_type[name] == 'continuous':
-            for row in range(m):
-                try:
-                    X[row,col] = raw[row,col]
-                except KeyError:
-                    continue
-                except ValueError:
-                    continue
+            col = col.astype(np.float32, copy=False)
+            mu = np.mean(col)
+            col -= mu
+            data = col / np.linalg.norm(col)
+            X[:,index] = data
+            index += 1
         else:
-            for row in range(m):
-                try:
-                    if raw[row,col] == '?' or raw[row,col] == 'nan':
-                        X[row,col] = -1
-                    else:
-                        X[row,col] = class_mapping[name][str(raw[row,col]).strip()]
-                except KeyError:
-                    continue
+            num_cat = category_numbers[name]
+            O = np.zeros((m, num_cat)) - 1
+            for cat_row in range(m):
+                val = str(col[cat_row]).strip()
+                if val != '?':
+                    try:
+                        pos = class_mapping[name][val]
+                        O[cat_row, pos] = 1
+                    except KeyError:
+                        continue
+            for copy_col in range(num_cat):
+                X[:,index] = O[:,copy_col]
+                index += 1
+    print(X.shape, Y.shape)
     return X, Y
 
 
 if __name__ == '__main__':
     pc = ['year','| instance weight', 'migration prev res in sunbelt', 'migration code-change in msa', \
             'migration code-change in reg', 'migration code-move within reg']
+    # pc = ['year', '| instance weight']
+    # pc = ['| instance weight']
     className = 'sex'
     # TRAIN
     train_filename = 'data/census-income.data'

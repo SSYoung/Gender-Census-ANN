@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from CrossValidate import split_training_data
 
 # datax = 10000
 # testx = 5000
@@ -29,12 +30,12 @@ test_data = np.load('data/testing_data.npy')
 test_labels = np.load('data/testing_labels.npy')
 
 #Parameters
-training_epochs = 25
+training_epochs = 50
 learning_rate = .01
-batch_size = 256
+batch_size = 1024
 
 #Network Parameters
-num_hidden = 80
+num_hidden = 40
 num_classes = 2 #male or female
 num_examples = data.shape[0]
 num_attributes = data.shape[1]
@@ -67,28 +68,85 @@ optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
 
 init = tf.global_variables_initializer()
 
+alphas = [0.01, 0.001, 0.0001]
+hidden_layers = [2, 20, 40]
+batch_sizes = [256, 1024, 2048]
+k = 5
+
+
 with tf.Session() as sess:
 	sess.run(init)
 
+	avg_training_scores = np.zeros((len(alphas), len(batch_sizes)))
+	for a_index in range(len(alphas)):
+		alpha = alphas[a_index]
+		for b_index in range(len(batch_sizes)):
+			batch_size = batch_sizes[b_index]
+			batch_scores = np.zeros(k)
+			print('Grid Search with:\n\talpha: ' + str(alpha) + '\n\tBatch Size: ' + str(batch_size))
+			cross = 0
+			for X_train, y_train, X_test, y_test in split_training_data(data, labels):
+				sess.run(init)
+				# X_train, y_train, X_test, y_test = split_training_data(data, labels)
+				num_examples = X_train.shape[0]
+				epoch = 0
+				delta_training_cost,training_cost = 1,1
+
+				while epoch < training_epochs and np.abs(delta_training_cost) > 0.001:
+					training_cost_prev = training_cost
+					average_cost = 0.
+					total_batch = int(num_examples/batch_size)
+					for i in range(total_batch):
+						batch_x = X_train[i*batch_size:(i+1)*batch_size,:]
+						batch_y = y_train[i*batch_size:(i+1)*batch_size,:]
+
+						_, c = sess.run([optimizer, cost],
+							feed_dict = {x: batch_x, y: batch_y})
+
+						# Compute loss
+						average_cost += c / total_batch
+
+					if epoch % 10 == 0:
+						print("Epoch:" + str(epoch+1) + " cost = " + str(average_cost))
+					epoch += 1
+
+					training_cost = average_cost
+					delta_training_cost = training_cost - training_cost_prev
+
+				correct = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
+				accuracy = tf.reduce_mean(tf.cast(correct, "float"))
+				score = accuracy.eval({x:X_test, y:y_test})
+
+				print('\tFold ' + str(cross + 1) + ' of ' + str(k) + ' done. Accuracy: ' + str(score))
+
+				batch_scores[cross] = score
+				cross += 1
+
+			avg_training_scores[a_index,b_index] = np.mean(batch_scores)
+	print('GRID SEARCH SCORES WITH K=5')
+	print(avg_training_scores)
+
 	#Training
-	for epoch in range(training_epochs):
-		average_cost = 0.
-		total_batch = int(num_examples/batch_size)
-		for i in range(total_batch):
-			batch_x = data[i*batch_size:(i+1)*batch_size,:]
-			batch_y = labels[i*batch_size:(i+1)*batch_size,:]
+	# for epoch in range(training_epochs):
+	# 	average_cost = 0.
+	# 	total_batch = int(num_examples/batch_size)
+	# 	for i in range(total_batch):
+	# 		batch_x = data[i*batch_size:(i+1)*batch_size,:]
+	# 		batch_y = labels[i*batch_size:(i+1)*batch_size,:]
 
-			_, c = sess.run([optimizer, cost],
-				feed_dict = {x: batch_x, y: batch_y})
+	# 		_, c = sess.run([optimizer, cost],
+	# 			feed_dict = {x: batch_x, y: batch_y})
 
-			# Compute loss
-			average_cost += c / total_batch
+	# 		# Compute loss
+	# 		average_cost += c / total_batch
 
-		if epoch % 10 == 0:
-			print("Epoch:" + str(epoch+1) + " cost = " + str(average_cost))
-	print("Optimization Finished!")
+	# 	if epoch % 10 == 0:
+	# 		print("Epoch:" + str(epoch+1) + " cost = " + str(average_cost))
 
-	correct = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
 
-	accuracy = tf.reduce_mean(tf.cast(correct, "float"))
-	print("Accuracy: " + str(accuracy.eval({x:test_data, y:test_labels})))
+	# print("Optimization Finished!")
+
+	# correct = tf.equal(tf.argmax(model, 1), tf.argmax(y, 1))
+
+	# accuracy = tf.reduce_mean(tf.cast(correct, "float"))
+	# print("Accuracy: " + str(accuracy.eval({x:test_data, y:test_labels})))

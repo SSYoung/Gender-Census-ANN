@@ -9,8 +9,8 @@ def get_metadata(filename, pruned_columns=[]):
     lines = open('data/data_values.txt', 'r').readlines()
     for line in lines:
         name = line.split(':')[0]
-        if name == '| instance weight' or name in pruned_columns:
-            continue
+        # if name == '| instance weight' or name in pruned_columns:
+        #     continue
         classes = [s.strip() for s in line.split(':')[1].split(',')]
         # values
         classes[-1] = classes[-1][:-1]
@@ -35,9 +35,10 @@ def get_metadata(filename, pruned_columns=[]):
 
 def create_dataframe(filename, className, names_in_order,pruned_columns=[]):
     # create data frame and remove instance weight column
-    cols = [i for i in range(24)] + [i for i in range(25,len(names_in_order) + 1)]
+    # cols = range(len(names_in_order))
+    # cols = [i for i in range(24)] + [i for i in range(25,len(names_in_order) + 1)]
     print('Starting Reading ' + filename)
-    df = pd.read_csv(filename, names=names_in_order, usecols=cols, skipinitialspace=True)
+    df = pd.read_csv(filename, names=names_in_order, skipinitialspace=True)
     print('Finished Reading ' + filename)
 
     # cleanse last column
@@ -64,6 +65,14 @@ def form_np_array(filename, className, pruned_columns=[]):
     df, labels = create_dataframe(filename, className, names_in_order, pruned_columns)
     # update names in order
     names_in_order.remove(className)
+    for prune in pruned_columns:
+        if prune in names_in_order:
+            names_in_order.remove(prune)
+        if prune in category_values:
+            del category_values[prune]
+            del category_numbers[prune]
+            del category_type[prune]
+            del class_mapping[prune]
     # prior counts
     column_vals = list(df.columns.values)
     total_classes = sum([category_numbers[name] for name in column_vals]) - category_numbers[className]
@@ -75,25 +84,24 @@ def form_np_array(filename, className, pruned_columns=[]):
     k = total_classes # feature count after one hot encoding
 
     # labels
-    y = np.zeros(m)
+    Y = np.zeros(m)
     for i in range(labels.shape[0]):
         if labels[i] == 'Female':
-            y[i] = 0
+            Y[i] = 0
         else:
-            y[i] = 1
+            Y[i] = 1
 
 
     X = np.zeros((m, r))
     for col in range(r):
         name = names_in_order[col]
+        col_data = raw[:,col]
         if category_type[name] == 'continuous':
-            for row in range(m):
-                try:
-                    X[row,col] = raw[row,col]
-                except KeyError:
-                    continue
-                except ValueError:
-                    continue
+            col_data = col_data.astype(np.float32, copy=False)
+            mu = np.mean(col_data)
+            col_data -= mu
+            data = col_data / np.linalg.norm(col_data)
+            X[:,col] = data
         else:
             for row in range(m):
                 try:
@@ -103,7 +111,7 @@ def form_np_array(filename, className, pruned_columns=[]):
                         X[row,col] = class_mapping[name][str(raw[row,col]).strip()]
                 except KeyError:
                     continue
-    return X, y
+    return X, Y
 
 if __name__ == '__main__':
     filename = 'data/census-income.data'
@@ -116,7 +124,6 @@ if __name__ == '__main__':
     # df, labels = create_dataframe(filename, className, names_in_order, pruned_columns=pc)
     X,y = form_np_array(filename, className, pruned_columns=pc)
 
-    print(X.shape)
     column_question = np.zeros(X.shape[1])
     total_clean = 0
     for i in range(X.shape[0]):

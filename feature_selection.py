@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
 
 def get_metadata(filename, pruned_columns=[]):
     category_values = {}
